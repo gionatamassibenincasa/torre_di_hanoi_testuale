@@ -12,19 +12,25 @@
 	// le pile per l'esecuzione dell'algoritmo
 	let pile;
 	// lo stato da visualizzare
-	let statusId;
+	let statum;
 	// Ritardo tra due aggiornamenti
 	let ritardo = 1000;
+	// Riferimento alla variabile che esegue il prossimo passo di visualizzazione
+	let prossimoAggiornamento = null;
 
 	function aggiorna() {
-			if (statusId < stata.length) {
-				t = stata[statusId]; // causa altra reazione
-				console.log("statusId: ", statusId);
-				console.dir(t);
-				statusId += 1;
-				setTimeout(aggiorna, ritardo);
+			if (statum < stata.length) {
+				t = stata[statum]; // causa altra reazione
+				statum += 1;
+				prossimoAggiornamento = setTimeout(aggiorna, ritardo);
 			}
 	};
+
+	function disco(n) {
+		let str = "";
+		for (let i = 0; i < n; i++) str += "=";
+		return str + n + str;
+	}
 
 	/**
 	 * Genera le pile di dischi iniziali
@@ -32,12 +38,15 @@
 	 * @param n numero di dischi
 	 */
 	function inizializza_torre(n) {
-		clearInterval(aggiorna);
+		if (prossimoAggiornamento) {
+			clearInterval(prossimoAggiornamento);
+			prossimoAggiornamento = null;
+		}
 		console.log("Init");
 		stata = [];
 		pile = [[], [], []];
 		for (let i = 0; i < n; i++) {
-			pile[0].push(n - i);
+			pile[0].push(disco(n - i));
 		}
 		stata.push(JSON.parse(JSON.stringify(pile))); // deep copy
 	}
@@ -73,7 +82,6 @@
 	 * @param p la pila (array)
 	 */
 	function stampa_pila(n, p) {
-		console.log(n, p);
 		let str = "";
 		let newlines = n - p.length;
 		for(let i = 0; i < newlines; i++) str +="\n";
@@ -83,14 +91,15 @@
 
 	// Reazioni alla modifica del numero di dischi (n)
 	$:{
-		console.clear();
-		inizializza_torre(n);
-		sposta(n, 0, 2, 1);
-		console.log("Stati: ", JSON.stringify(stata, null, 0));
-		console.log("Numero stati: ", stata.length, " (attesi ", 2 ** n, ")");
-		// Animazione
-		statusId = 0;
-		aggiorna();
+		if (n > 0) {
+			console.clear();
+			inizializza_torre(n);
+			sposta(n, 0, 2, 1);
+			console.log("Numero stati: ", stata.length, " (attesi ", 2 ** n, ")");
+			// Animazione
+			statum = 0;
+			aggiorna();
+		}
 	}	
 	
 	// Funzioni ausiliarie
@@ -120,11 +129,11 @@
 </script>
 
 <label for="dischi">Numero di dischi: </label>
-<input name="dischi" type=number bind:value={n}>
+<input name="dischi" type=number min="1" max="10" bind:value={n}>
 <label for="ritardo">Tempo per mossa (ms): </label>
-<input name="ritardo" type=number bind:value={ritardo}>
+<input name="ritardo" type=number min="100" max="5000" step="50" bind:value={ritardo}>
 <label for="mossa">Indice della mossa: </label>
-<input name="mossa" type=number bind:value={statusId}>
+<input name="mossa" type=number bind:value={statum}>
 
 {#if t}
 <div class="row testo-centrato">
@@ -154,7 +163,7 @@
 		width: 33%;
 		margin: 0;
 		padding: 0;
-		height: 30vh;
+		height: 27ex;
 		vertical-align: text-bottom;
 	}
 
